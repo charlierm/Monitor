@@ -1,0 +1,75 @@
+{% extends "navbar.html" %}
+
+
+{% block head %}
+
+<script>
+
+$(document).ready(function(){
+    $('.kill-process').click(function(){
+        //alert("test");
+        console.log("Button Pushed - " + this.href)
+        $.getJSON(this.href, function(data){
+            console.log(data);
+            if (data['killed'] == true) {
+                console.log("Process " + data['pid'] + " was killed.");
+                $("#" + data['pid']).remove();
+                bootbox.alert("Process " + data['pid'] + " has been killed.");
+            };
+        });
+        return false
+    });
+
+    $(function () {
+        $("[rel='tooltip']").tooltip();
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+<input type="text" data-provide="typeahead" data-source='{{ processes.names() | tojson | safe}}'>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Time Created</th>
+            <th>User</th>
+            <th>PID</th>
+            <th>CPU %</th>
+            <th>RAM %</th>
+            <th>Threads</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for process in processes %}
+        <tr id="{{ process.pid }}">
+            <td>{{process.name}}</td>
+            <td>{{process.create_time | naturaltime}}</td>
+            {% if process.username == user %}
+                <td class="text-success">{{process.username}}</td>
+            {% else %}
+                <td>{{process.username}}</td>
+            {% endif %}
+            <td>{{ process.pid }}</td>          
+            <td>
+                <span class="badge">{{ "%.2f%%" | format(process.get_cpu_percent(interval=0)) }}</span>
+            </td>
+            <td>
+                <span class="badge">{{ "%.2f%%" | format(process.get_memory_percent()) }}</span>
+            </td>
+            <td>{{ process.get_num_threads() }}</td>
+            <td>
+                <a href="{{ process.pid }}/kill" class="btn btn-warning" rel="tooltip" title="Monitor process {{ process.pid }}">
+                    <i class="icon-wrench"></i>
+                </a>
+                <a href="{{ process.pid }}/kill" class="btn btn-danger kill-process" rel="tooltip" title="Kill process {{ process.pid }}">
+                    <i class="icon-remove"></i>
+                </a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
